@@ -65,6 +65,7 @@ install_and_upgrade_figlet() {
         fi
 
     elif grep -qEi 'redhat|centos' /etc/os-release; then
+        sudo yum update
         sudo yum -y install figlet
         print_separator
         if [ $? -eq 0 ]; then
@@ -75,6 +76,7 @@ install_and_upgrade_figlet() {
 
     elif grep -q 'Amazon Linux 2' /etc/os-release || grep -q 'Amazon Linux 3' /etc/os-release; then
         sudo amazon-linux-extras install epel -y
+        sudo yum update
         sudo yum -y install figlet
         print_separator
         if [ $? -eq 0 ]; then
@@ -88,10 +90,35 @@ install_and_upgrade_figlet() {
     fi
 }
 
-main() {
-    #first package installation
-    install_and_upgrade_figlet
-    # second package install
-    
+    os_description=$(lsb_release -a 2>/dev/null | grep "Description:" | awk -F'\t' '{print $2}')
+    print_init "$os_description OS is detected on your system."
+    print_intermediate "\nInstalling Nginx\n"
+    print_separator
+    if grep -q 'Ubuntu' /etc/os-release; then
+        sudo apt-get update
+        sudo apt-get install -y nginx
+        if [ $? -eq 0 ]; then
+            print_success "Nginx is now installed"
+        else
+            print_fail "Failed to install Nginx"
+        fi
+    elif grep -qEi 'redhat|centos' /etc/os-release; then
+        sudo yum update
+        sudo yum -y install nginx
+        if [ $? -eq 0 ]; then
+            print_success "Nginx is now installed"
+        else
+            print_fail "Failed to install Nginx"
+        fi
+    else
+        print_fail "Unsupported Linux distribution"
+        exit 1
+    fi
 }
+
+main() {
+    install_figlet
+    install_nginx
+}
+
 main
